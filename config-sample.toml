@@ -1,0 +1,25 @@
+use_tor = true
+tor_socks_addr = "127.0.0.1:9050"
+interval_secs = 120
+
+# We'll scan these Tor-only services through the SOCKS proxy
+sites = [
+  "https://protonirockerxow.onion",
+  "http://33xu4yhum2eiisxm6fntaslayop76fvaqgt3ak5dakdm3t7cub25cead.onion"
+]
+
+[org]
+domains = [
+  "proton.me",
+  "protonmail.com",
+  "protonirockerxow.onion",
+  "propublica.org"
+]
+
+keywords = [
+  "proton",
+  "propublica",
+  "secure",
+  "journalist",
+  "leak"
+]
