@@ -11,8 +11,34 @@ use tracing_subscriber::EnvFilter;
 
 use crate::config::load_config;
 use crate::crawler::generic::crawl_once;
-use crate::models::{KeywordConfig, Severity};
+use crate::models::{Finding, KeywordConfig, Severity};
 use crate::tor_client::build_client;
+
+fn print_finding_cli(f: &Finding) {
+    println!();
+    println!("================= 🔥 FINDING 🔥 =================");
+    println!("ID:        {}", f.id);
+    println!("URL:       {}", f.url);
+    println!("Source:    {}", f.source);
+    println!(
+        "Severity:  {}",
+        match f.severity {
+            Severity::High => "HIGH",
+            Severity::Medium => "MEDIUM",
+            Severity::Low => "LOW",
+        }
+    );
+    println!("Hits:");
+    for h in &f.hits {
+        println!("  - {:?}: {}", h.kind, h.value);
+    }
+    println!("Snippet:");
+    println!("-----------------------------------------------");
+    println!("{}", f.snippet);
+    println!("-----------------------------------------------");
+    println!("First seen: {}", f.first_seen);
+    println!("===============================================");
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -52,26 +78,33 @@ async fn main() -> Result<()> {
                 info!("🔍 DarkWebScan › No org indicators found on {}", url);
             } else {
                 for f in findings {
+                    // log a short line
                     match f.severity {
                         Severity::High => {
                             info!(
-                                "🚨 DarkWebScan › HIGH alert on {} — {}",
-                                f.url, f.indicator
+                                "🚨 DarkWebScan › HIGH alert on {} — {} hits",
+                                f.url,
+                                f.hits.len()
                             );
                         }
                         Severity::Medium => {
                             info!(
-                                "⚠️ DarkWebScan › Medium alert on {} — {}",
-                                f.url, f.indicator
+                                "⚠️ DarkWebScan › Medium alert on {} — {} hits",
+                                f.url,
+                                f.hits.len()
                             );
                         }
                         Severity::Low => {
                             info!(
-                                "ℹ️ DarkWebScan › Low alert on {} — {}",
-                                f.url, f.indicator
+                                "ℹ️ DarkWebScan › Low alert on {} — {} hits",
+                                f.url,
+                                f.hits.len()
                             );
                         }
                     }
+
+                    // pretty print full details to stdout
+                    print_finding_cli(&f);
                 }
             }
         }
@@ -80,6 +113,7 @@ async fn main() -> Result<()> {
         }
     }
 }
+
 
         info!("sleeping for {:?} before next scan...", interval);
         tokio::time::sleep(interval).await;

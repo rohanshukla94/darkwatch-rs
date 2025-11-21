@@ -15,14 +15,10 @@ pub struct AppConfig {
 }
 
 pub fn load_config() -> AppConfig {
-    // 1. Read file
     let path = Path::new("config.toml");
     let contents = fs::read_to_string(path)
         .expect("failed to read config.toml");
 
-    println!("RAW config.toml:\n{}\n-----", contents);
-
-    // 2. Parse into generic TOML value
     let value: toml::Value = toml::from_str(&contents)
         .expect("failed to parse config.toml as TOML at all");
 
@@ -30,13 +26,11 @@ pub fn load_config() -> AppConfig {
         .as_table()
         .expect("config.toml root is not a table somehow");
 
-    // Debug: show top-level keys so we SEE what TOML sees
     println!(
         "Top-level keys in config.toml: {:?}",
         root.keys().collect::<Vec<_>>()
     );
 
-    // 3. Extract primitives with defaults
     let use_tor = root
         .get("use_tor")
         .and_then(|v| v.as_bool())
@@ -53,7 +47,6 @@ pub fn load_config() -> AppConfig {
         .and_then(|v| v.as_integer())
         .unwrap_or(60) as u64;
 
-    // 4. Extract [org] table
     let org_tbl = root
         .get("org")
         .and_then(|v| v.as_table())
@@ -75,7 +68,6 @@ pub fn load_config() -> AppConfig {
         .filter_map(|v| v.as_str().map(|s| s.to_string()))
         .collect::<Vec<_>>();
 
-    // 5. Extract `sites` array
     let sites_val = root
         .get("sites")
         .unwrap_or_else(|| panic!("top-level 'sites' key not found in config.toml"));

@@ -1,10 +1,16 @@
 use anyhow::Result;
+use chrono::Utc;
 use reqwest::Client;
 use tracing::info;
+use uuid::Uuid;
 
-use crate::models::{Finding, KeywordConfig, Severity};
+use crate::models::{Finding, IndicatorHit, IndicatorKind, KeywordConfig, Severity};
 
-pub async fn crawl_once(client: &Client, url: &str, org: &KeywordConfig) -> Result<Vec<Finding>> {
+pub async fn crawl_once(
+    client: &Client,
+    url: &str,
+    org: &KeywordConfig,
+) -> Result<Vec<Finding>> {
     let resp = client.get(url).send().await?;
     let status = resp.status();
     let body = resp.text().await?;
@@ -15,36 +21,49 @@ pub async fn crawl_once(client: &Client, url: &str, org: &KeywordConfig) -> Resu
         body.len()
     );
 
-     let lower = body.to_lowercase();
-    let mut findings = Vec::new();
-
-    // simple severity rules for now
-    let mut push_indicator = |indicator: String| {
-        let sev = if indicator.contains("password") || indicator.contains("dump") {
-            Severity::High
-        } else {
-            Severity::Medium
-        };
-
-        findings.push(Finding {
-            url: url.to_string(),
-            indicator,
-            severity: sev,
-        });
-    };
+    let lower = body.to_lowercase();
+    let mut hits: Vec<IndicatorHit> = Vec::new();
 
     for d in &org.domains {
         if lower.contains(&d.to_lowercase()) {
-            push_indicator(format!("domain:{}", d));
+            hits.push(IndicatorHit {
+                kind: IndicatorKind::Domain,
+                value: d.clone(),
+            });
         }
     }
 
     for kw in &org.keywords {
         if lower.contains(&kw.to_lowercase()) {
-            push_indicator(format!("keyword:{}", kw));
+            hits.push(IndicatorHit {
+                kind: IndicatorKind::Keyword,
+                value: kw.clone(),
+            });
         }
     }
 
+    if hits.is_empty() {
+        return Ok(Vec::new());
+    }
 
-    Ok(findings)
+    // crude severity rule
+    let severity = if hits.iter().any(|h| h.value.contains("dump") || h.value.contains("leak")) {
+        Severity::High
+    } else {
+        Severity::Medium
+    };
+
+    let snippet: String = body.chars().take(400).collect();
+
+    let finding = Finding {
+        id: Uuid::new_v4(),
+        url: url.to_string(),
+        source: "generic_http".to_string(),
+        hits,
+        severity,
+        snippet,
+        first_seen: Utc::now(),
+    };
+
+    Ok(vec![finding])
 }
