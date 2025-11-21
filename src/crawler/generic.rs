@@ -46,7 +46,6 @@ pub async fn crawl_once(
         return Ok(Vec::new());
     }
 
-    // crude severity rule
     let severity = if hits.iter().any(|h| h.value.contains("dump") || h.value.contains("leak")) {
         Severity::High
     } else {

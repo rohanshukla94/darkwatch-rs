@@ -103,7 +103,6 @@ async fn main() -> Result<()> {
                         }
                     }
 
-                    // pretty print full details to stdout
                     print_finding_cli(&f);
                 }
             }
@@ -117,12 +116,12 @@ async fn main() -> Result<()> {
 
         info!("sleeping for {:?} before next scan...", interval);
         tokio::time::sleep(interval).await;
-        info!("💬 DarkWebScan › Monitoring underground forums…");
-        info!("🧩 DarkWebScan › Parsing ransomware leak portals...");
-        info!("🛒 DarkWebScan › Tracking marketplace intel flow...");
-        info!("📡 DarkWebScan › Listening to Telegram/Discord chatter…");
-        info!("📝 DarkWebScan › Watching paste sites for dumps…");
-        info!("📁 DarkWebScan › Scraping breach databases...");
+        // info!("💬 DarkWebScan › Monitoring underground forums…");
+        // info!("🧩 DarkWebScan › Parsing ransomware leak portals...");
+        // info!("🛒 DarkWebScan › Tracking marketplace intel flow...");
+        // info!("📡 DarkWebScan › Listening to Telegram/Discord chatter…");
+        // info!("📝 DarkWebScan › Watching paste sites for dumps…");
+        // info!("📁 DarkWebScan › Scraping breach databases...");
     }
     // Ok(())
 }
